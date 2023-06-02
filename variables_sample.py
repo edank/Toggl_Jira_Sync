@@ -4,6 +4,7 @@ TOGGL_WORKSPACE_ID = "" # Browse to 'Reports', in url -> https://track.toggl.com
 TOGGL_EMAIL = "your toggl login email"
 TOGGL_PASSWORD = "YOUR LOGIN PASSWORD"
 DAYS_TO_GO_BACK = 5
+TOGGL_PROJECT_ID = 1234  #Toggl -> (sidebar) Projects -> url = track.toggl.com/[workspace_id]/projects/[project_id]/tasks
 
 # Jira API credentials
 JIRA_BASE_URL = "https://{your sub domain}.atlassian.net/"

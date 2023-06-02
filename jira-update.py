@@ -43,8 +43,7 @@ def fetch_toggl_time_entries():
 
 
 def filter_toggl_entries(entries):
-    # print ("-----------------")
-    # print ("Filtering entries")
+    print ("Filtering entries:")
 
     # combined_entries = {}
     filtered_entries = []
@@ -118,7 +117,9 @@ def add_toggl_tag(entry_id, current_tags, tag_to_add):
     # Payload to update the tags (currently overrides)
     current_tags.append(tag_to_add)
     payload = {
-        "tags": current_tags
+        "tags": current_tags,
+        "project_id": variables.TOGGL_PROJECT_ID,
+        "billable": True
     }
 
     # Send the PUT request to update the Toggl entry with the new tag
@@ -138,7 +139,6 @@ def log_tempo_worklog(entry):
         "Authorization": f"Bearer {variables.TEMPO_API_TOKEN}",
         "Content-Type": "application/json"
     }
-    # print("entry:", entry)
 
     # Call API to get Issue ID
     issueId = get_issue_id(entry['ticket_number'])

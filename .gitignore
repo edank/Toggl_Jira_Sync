@@ -1,3 +1,4 @@
 
 .DS_Store
-local.variables.py
+variables.py
+__pycache__/variables.cpython-311.pyc
