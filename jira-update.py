@@ -1,6 +1,7 @@
 import requests
 from base64 import b64encode
 from datetime import datetime, timedelta
+import pytz
 import math
 import re
 import json
@@ -23,7 +24,7 @@ def fetch_toggl_time_entries():
 
     # Date range to get tickets
     start_date = (today - timedelta(days=variables.DAYS_TO_GO_BACK)).strftime('%Y-%m-%d')
-    end_date = (today + timedelta(days=1)).strftime('%Y-%m-%d')
+    end_date = (today + timedelta(days=2)).strftime('%Y-%m-%d') #Adding 2 days, becauase time is in GMT and entries later in the day will count as the next day. Also, it does not include the last day for retrieving.
 
     print (f"Getting Toggl entries between {start_date} and {end_date}")
 
@@ -38,7 +39,6 @@ def fetch_toggl_time_entries():
     data = requests.get(url, headers=headers, params=params)
     
     print(f"Got {len(data.json())} entries")
-
     return data.json()
 
 
@@ -53,7 +53,6 @@ def filter_toggl_entries(entries):
 
         # Only log tickets that aren't already in Jira
         if 'in-jira' not in tags and int(item['duration'] > 0):
-            # print('description',item['description'] )
 
             # Get Jira ticket number
             description = item['description']
@@ -67,8 +66,12 @@ def filter_toggl_entries(entries):
 
             print ("Processing:", ticket_number)
 
-            # Get Date
-            date = datetime.fromisoformat(item['start']).strftime('%Y-%m-%d')
+            # Date
+            start_datetime = datetime.fromisoformat(item['start'])
+            pst = pytz.timezone('US/Pacific')
+            pst_start_datetime = start_datetime.astimezone(pst)
+            date = pst_start_datetime.strftime('%Y-%m-%d')
+            print(f"DEBUG: {ticket_number} - {math.ceil(item['duration'] / 900) * 15 * 60 / 3600} - {date}")
 
             # key = f"{description}-{date}"
             new_item = {
