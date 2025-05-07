@@ -17,7 +17,7 @@ def fetch_toggl_time_entries():
         "Content-Type": "application/json",
     }
 
-    url = "https://api.track.toggl.com/api/v9/me/time_entries"
+    # url = "https://api.track.toggl.com/api/v9/me/time_entries"
 
     # Get the current date
     today = datetime.now().date()
@@ -36,7 +36,7 @@ def fetch_toggl_time_entries():
     }
 
     # GET Data
-    data = requests.get(url, headers=headers, params=params)
+    data = requests.get(variables.TIME_ENTRY_API_URL, headers=headers, params=params)
     
     print(f"Got {len(data.json())} entries")
     return data.json()
@@ -45,6 +45,7 @@ def fetch_toggl_time_entries():
 def filter_toggl_entries(entries):
     print ("Filtering entries:")
 
+
     # combined_entries = {}
     filtered_entries = []
     
@@ -52,7 +53,7 @@ def filter_toggl_entries(entries):
         tags = item['tags']
 
         # Only log tickets that aren't already in Jira
-        if 'in-jira' not in tags and int(item['duration'] > 0):
+        if 'in-jira' not in tags and 'no-jira-ticket' not in tags and int(item['duration'] > 0):
 
             # Get Jira ticket number
             description = item['description']
@@ -104,7 +105,7 @@ def get_issue_id(ticket_key):
         return None
 
 
-def add_toggl_tag(entry_id, current_tags, tag_to_add):
+def add_toggl_tag(entry_id, current_tags, tag_to_add, project_id, billable):
     api_url = f"https://api.track.toggl.com/api/v9/workspaces/{variables.TOGGL_WORKSPACE_ID}/time_entries/{entry_id}"
     
     data = requests.put
@@ -121,8 +122,8 @@ def add_toggl_tag(entry_id, current_tags, tag_to_add):
     current_tags.append(tag_to_add)
     payload = {
         "tags": current_tags,
-        "project_id": variables.TOGGL_PROJECT_ID,
-        "billable": True
+        "project_id": project_id,
+        "billable": billable
     }
 
     # Send the PUT request to update the Toggl entry with the new tag
@@ -132,6 +133,20 @@ def add_toggl_tag(entry_id, current_tags, tag_to_add):
         print(f"Tag '{tag_to_add}' added to {entry_id}")
     else:
         print(f"Error adding tag to Toggl entry {entry_id}: {response.text}")
+
+
+def process_non_jira_tickets(entries):
+    print ("Processing entries:")
+    # Process only entries without Jira and no-jira-tag tags
+    for entry in entries:
+        if 'in-jira' not in entry['tags'] and 'no-jira-ticket' not in entry['tags']:
+            # Add opentrons project id if descriptions starts with 'opentrons'
+            if entry['description'].lower().startswith('opentrons'):
+                add_toggl_tag(entry['id'], entry['tags'], 'no-jira-ticket', variables.OPENTRONS_PROJECT_ID, False)
+    return entries
+    
+
+
 
 
 def log_tempo_worklog(entry):
@@ -162,7 +177,7 @@ def log_tempo_worklog(entry):
         "ticket_number": entry['ticket_number']
     }
     
-    add_toggl_tag(entry['toggle_id'], entry['tags'], 'in-jira')
+    add_toggl_tag(entry['toggle_id'], entry['tags'], 'in-jira', variables.TOGGL_PROJECT_ID, True)
 
     # Send the POST request to log the work
     response = requests.post(api_url, headers=headers, json=payload)
@@ -178,6 +193,9 @@ def main():
     # Get toggl entries
     entries = fetch_toggl_time_entries()
     
+    # Process non jira tickets
+    entries = process_non_jira_tickets(entries);
+
     # Filter by only ones not already in jira
     filtered_entries = filter_toggl_entries(entries)
     

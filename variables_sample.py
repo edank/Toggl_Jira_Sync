@@ -6,6 +6,8 @@ TOGGL_PASSWORD = "YOUR LOGIN PASSWORD"
 DAYS_TO_GO_BACK = 5
 TOGGL_PROJECT_ID = 1234  #Toggl -> (sidebar) Projects -> url = track.toggl.com/[workspace_id]/projects/[project_id]/tasks
 
+TIME_ENTRY_API_URL = "https://api.track.toggl.com/api/v9/me/time_entries"
+
 # Jira API credentials
 JIRA_BASE_URL = "https://{your sub domain}.atlassian.net/"
 JIRA_API_USERNAME = "your jira login email"
